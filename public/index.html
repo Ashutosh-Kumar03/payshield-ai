@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayShield AI</title>
+<style>
+  :root { --bg:#f5f7fb; --card:#fff; --text:#0b1b3a; --muted:#5a6785; --line:#dbe1ee; --blue:#0070e0;
+          --green:#18794e; --amber:#b25e09; --red:#c0262d; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1424; --card:#151e33; --text:#e8edf8; --muted:#9aa7c4; --line:#2a3552; --blue:#4d9dff;
+            --green:#4cc38a; --amber:#f0a447; --red:#ff6b72; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,sans-serif; }
+  main { max-width:640px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { margin:0 0 4px; font-size:26px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
+  input, textarea, select { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px;
+          background:var(--bg); color:var(--text); font:inherit; }
+  textarea { min-height:110px; resize:vertical; }
+  .row { display:flex; gap:12px; } .row > div { flex:1; }
+  button { margin-top:16px; padding:11px 18px; border:0; border-radius:8px; background:var(--blue);
+           color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .pay { background:var(--green); }
+  .verdict { font-size:20px; font-weight:700; margin:0 0 6px; }
+  .safe { color:var(--green); } .suspicious { color:var(--amber); } .high_risk { color:var(--red); }
+  ul { padding-left:20px; margin:8px 0; }
+  .facts { font-size:14px; color:var(--muted); }
+  .err { color:var(--red); margin-top:12px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>PayShield AI</h1>
+  <p class="sub">Check a payment request for scams before the money moves.</p>
+
+  <div class="card">
+    <label for="message">Payment request (paste the message, invoice text or link)</label>
+    <textarea id="message"></textarea>
+    <label for="email">Payee PayPal email</label>
+    <input id="email" type="email">
+    <div class="row">
+      <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01"></div>
+      <div><label for="currency">Currency</label>
+        <select id="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>INR</option></select></div>
+    </div>
+    <button id="check">Check with AI</button>
+    <div id="error" class="err"></div>
+  </div>
+
+  <div id="result" class="card hidden">
+    <p id="verdict" class="verdict"></p>
+    <div id="advice"></div>
+    <ul id="reasons"></ul>
+    <div id="facts" class="facts"></div>
+    <button id="pay" class="pay">Send payment</button>
+    <div id="payout" style="margin-top:12px"></div>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const LABELS = { safe: 'Looks safe', suspicious: 'Suspicious', high_risk: 'High risk' };
+
+function input() {
+  return { message: $('message').value, payeeEmail: $('email').value,
+           amount: $('amount').value, currency: $('currency').value };
+}
+
+async function post(url, body) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                 body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Something went wrong');
+  return data;
+}
+
+$('check').onclick = async () => {
+  $('error').textContent = '';
+  $('payout').textContent = '';
+  $('result').classList.add('hidden');
+  $('check').disabled = true;
+  $('check').textContent = 'Checking...';
+  try {
+    const { analysis, history, historyError } = await post('/api/analyze', input());
+    $('verdict').className = 'verdict ' + analysis.verdict;
+    $('verdict').textContent = `${LABELS[analysis.verdict] || analysis.verdict} (risk ${analysis.risk_score}/100)`;
+    $('advice').textContent = analysis.advice;
+    $('reasons').innerHTML = '';
+    (analysis.reasons || []).forEach((r) => {
+      const li = document.createElement('li');
+      li.textContent = r;
+      $('reasons').appendChild(li);
+    });
+    $('facts').textContent = history
+      ? `PayPal history (last ${history.windowDays} days): ${history.totalTransactions} transactions, ` +
+        `${history.previousWithThisPayee} involving this payee, average amount ${history.averageAmount ?? 'n/a'}.`
+      : `PayPal history unavailable: ${historyError}`;
+    $('pay').textContent = analysis.verdict === 'safe' ? 'Send payment' : 'Send anyway';
+    $('result').classList.remove('hidden');
+  } catch (e) {
+    $('error').textContent = e.message;
+  }
+  $('check').disabled = false;
+  $('check').textContent = 'Check with AI';
+};
+
+$('pay').onclick = async () => {
+  if ($('verdict').className.includes('high_risk') && !confirm('This looks high risk. Send the payment anyway?')) return;
+  $('pay').disabled = true;
+  $('payout').textContent = 'Sending...';
+  try {
+    const data = await post('/api/pay', input());
+    $('payout').textContent = `Payment submitted. Batch ${data.batchId}, status ${data.status}.`;
+  } catch (e) {
+    $('payout').textContent = e.message;
+  }
+  $('pay').disabled = false;
+};
+</script>
+</body>
+</html>
