@@ -5,123 +5,147 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PayShield AI</title>
 <style>
-  :root { --bg:#f5f7fb; --card:#fff; --text:#0b1b3a; --muted:#5a6785; --line:#dbe1ee; --blue:#0070e0;
-          --green:#18794e; --amber:#b25e09; --red:#c0262d; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0d1424; --card:#151e33; --text:#e8edf8; --muted:#9aa7c4; --line:#2a3552; --blue:#4d9dff;
-            --green:#4cc38a; --amber:#f0a447; --red:#ff6b72; }
-  }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,sans-serif; }
-  main { max-width:640px; margin:0 auto; padding:24px 16px 48px; }
-  h1 { margin:0 0 4px; font-size:26px; }
-  .sub { color:var(--muted); margin:0 0 20px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
-  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
-  input, textarea, select { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px;
-          background:var(--bg); color:var(--text); font:inherit; }
-  textarea { min-height:110px; resize:vertical; }
-  .row { display:flex; gap:12px; } .row > div { flex:1; }
-  button { margin-top:16px; padding:11px 18px; border:0; border-radius:8px; background:var(--blue);
-           color:#fff; font:inherit; font-weight:600; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:not-allowed; }
-  .pay { background:var(--green); }
-  .verdict { font-size:20px; font-weight:700; margin:0 0 6px; }
-  .safe { color:var(--green); } .suspicious { color:var(--amber); } .high_risk { color:var(--red); }
-  ul { padding-left:20px; margin:8px 0; }
-  .facts { font-size:14px; color:var(--muted); }
-  .err { color:var(--red); margin-top:12px; }
-  .hidden { display:none; }
+:root{--bg:#f4f6fb;--card:#fff;--tx:#0b1b3a;--mu:#5a6785;--ln:#dbe1ee;--bl:#0a6be0;--gr:#18794e;--am:#b25e09;--rd:#c0262d;--tint:#eef3fc}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1222;--card:#141d33;--tx:#e8edf8;--mu:#9aa7c4;--ln:#2a3552;--bl:#4d9dff;--gr:#4cc38a;--am:#f0a447;--rd:#ff6b72;--tint:#1a2542}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:660px;margin:0 auto;padding:22px 16px 48px}
+header{display:flex;gap:14px;align-items:center;margin-bottom:18px}header h1{margin:0;font-size:26px}header p{margin:2px 0 0;color:var(--mu)}
+.steps{display:flex;gap:8px;list-style:none;padding:0;margin:0 0 16px;counter-reset:s}
+.steps li{flex:1;padding:8px 10px;border-radius:10px;background:var(--tint);color:var(--mu);font-size:14px;font-weight:600;counter-increment:s}
+.steps li::before{content:counter(s);display:inline-grid;place-items:center;width:22px;height:22px;margin-right:8px;border-radius:50%;background:var(--ln);font-size:12px}
+.steps li.on{background:var(--bl);color:#fff}.steps li.on::before{background:#fff;color:var(--bl)}
+.steps li.done{color:var(--gr)}.steps li.done::before{content:"\2713";background:var(--gr);color:#fff}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:18px;margin-bottom:16px}.hidden{display:none!important}
+label{display:block;font-size:14px;color:var(--mu);margin:14px 0 5px}label small{font-weight:400}
+input,textarea,select{width:100%;padding:11px;border:1px solid var(--ln);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{min-height:110px;resize:vertical}input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--bl);outline-offset:1px}
+.row{display:flex;gap:12px}.row>div{flex:1}.hint{font-size:13px;color:var(--mu);margin:6px 0 0}
+.ex{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--mu);font-size:14px}
+.chip{padding:6px 12px;border:1px solid var(--ln);border-radius:99px;background:var(--tint);color:var(--tx);font:inherit;font-size:14px;cursor:pointer}
+.btn{margin-top:16px;padding:12px 20px;border:0;border-radius:10px;background:var(--bl);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--ln)}.btn.ok{background:var(--gr);color:#fff}.btn.bad{background:var(--rd);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}.row2{display:flex;gap:10px;flex-wrap:wrap}
+.err{color:var(--rd);margin:12px 0 0;min-height:1px}
+.spin{width:34px;height:34px;margin:6px auto 12px;border:4px solid var(--ln);border-top-color:var(--bl);border-radius:50%;animation:r 1s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+#busy{text-align:center}
+.verdict{display:flex;gap:14px;align-items:flex-start}.verdict h2{margin:0;font-size:24px}.verdict p{margin:4px 0 0}
+.ico{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;color:#fff;font-size:24px;font-weight:700}
+.score{margin-left:auto;font-size:28px;font-weight:800;white-space:nowrap}.score small{font-size:14px;color:var(--mu);font-weight:600}
+.meter{height:10px;background:var(--tint);border-radius:9px;margin:14px 0;overflow:hidden}.meter i{display:block;height:100%}
+.safe{--c:var(--gr)}.suspicious{--c:var(--am)}.high_risk{--c:var(--rd)}
+.verdict h2,.score{color:var(--c)}.ico,.meter i{background:var(--c)}
+#rs{padding-left:20px;margin:8px 0}#rs li{margin:4px 0}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.tile{background:var(--tint);border-radius:10px;padding:10px;text-align:center}.tile b{display:block;font-size:20px}.tile span{font-size:12px;color:var(--mu)}
+.note{font-size:14px;color:var(--mu);background:var(--tint);border-radius:10px;padding:10px;margin:14px 0}
+.ack{display:flex;gap:10px;align-items:flex-start;color:var(--tx);margin:14px 0 0;padding:12px;border:1px solid var(--c);border-radius:10px}.ack input{width:auto;margin-top:4px}
+.po{margin-top:16px;padding:14px;border-radius:10px;background:var(--tint)}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--am);color:#fff;font-size:13px;font-weight:700}.badge.done{background:var(--gr)}.badge.fail{background:var(--rd)}
+footer{text-align:center;color:var(--mu);font-size:13px}footer a{color:var(--bl)}
+@media(max-width:480px){.facts{grid-template-columns:1fr}.steps li{font-size:12px}.score{font-size:22px}}
 </style>
 </head>
 <body>
 <main>
-  <h1>PayShield AI</h1>
-  <p class="sub">Check a payment request for scams before the money moves.</p>
+<header>
+  <svg width="48" height="52" viewBox="0 0 48 52" aria-hidden="true"><path d="M24 2 44 9v16c0 13-9 21-20 25C13 46 4 38 4 25V9z" fill="#0a6be0"/><path d="M14 26l7 7 13-14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div><h1>PayShield AI</h1><p>Check a payment for scams before the money moves.</p></div>
+</header>
+<ol class="steps" id="steps" aria-label="Progress"><li data-s="1">Describe</li><li data-s="2">AI check</li><li data-s="3">Decide &amp; pay</li></ol>
 
-  <div class="card">
-    <label for="message">Payment request (paste the message, invoice text or link)</label>
-    <textarea id="message"></textarea>
-    <label for="email">Payee PayPal email</label>
-    <input id="email" type="email">
-    <div class="row">
-      <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01"></div>
-      <div><label for="currency">Currency</label>
-        <select id="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>INR</option></select></div>
-    </div>
-    <button id="check">Check with AI</button>
-    <div id="error" class="err"></div>
-  </div>
+<section class="card" id="s1">
+  <div class="ex"><span>Try an example:</span>
+    <button type="button" class="chip" data-ex="scam">Scam message</button>
+    <button type="button" class="chip" data-ex="ok">Normal invoice</button></div>
+  <form id="f" novalidate>
+    <label for="msg">Payment request <small>(paste the message, invoice text or link)</small></label>
+    <textarea id="msg" maxlength="2000"></textarea>
+    <label for="em">Payee PayPal email</label>
+    <input id="em" type="email" autocomplete="off">
+    <p class="hint">Use a PayPal sandbox account email. Everything runs in the sandbox with test money.</p>
+    <div class="row"><div><label for="amt">Amount</label><input id="amt" type="number" min="0.01" step="0.01"></div>
+      <div><label for="cur">Currency</label><select id="cur"><option>USD</option><option>EUR</option><option>GBP</option></select></div></div>
+    <button class="btn" id="go">Check with AI</button>
+    <p class="err" id="err" role="alert"></p>
+  </form>
+</section>
 
-  <div id="result" class="card hidden">
-    <p id="verdict" class="verdict"></p>
-    <div id="advice"></div>
-    <ul id="reasons"></ul>
-    <div id="facts" class="facts"></div>
-    <button id="pay" class="pay">Send payment</button>
-    <div id="payout" style="margin-top:12px"></div>
-  </div>
+<section class="card hidden" id="busy" aria-live="polite"><div class="spin"></div><p id="busyTxt"></p></section>
+
+<section class="card hidden" id="res" aria-live="polite">
+  <div class="verdict" id="vd"><span class="ico" id="vi" aria-hidden="true"></span>
+    <div><h2 id="vt" tabindex="-1"></h2><p id="adv"></p></div><div class="score" id="sc"></div></div>
+  <div class="meter" id="mt" role="img"><i id="mf"></i></div>
+  <ul id="rs"></ul>
+  <div class="facts" id="fc"></div>
+  <p class="note" id="hn"></p>
+  <label class="ack hidden" id="ackw"><input type="checkbox" id="ack"><span>I understand the AI flagged this payment and I still want to send it.</span></label>
+  <div class="row2"><button class="btn" id="pay" type="button"></button><button class="btn ghost" id="edit" type="button">Edit request</button></div>
+  <p class="err" id="perr" role="alert"></p>
+  <div class="po hidden" id="po" aria-live="polite"><span class="badge" id="pb"></span><p id="pt" style="margin:8px 0 0"></p>
+    <button class="btn ghost" id="again" type="button">Check another payment</button></div>
+</section>
+<footer>Sandbox demo with test money &middot; <a href="https://github.com/Ashutosh-Kumar03/payshield-ai">Source on GitHub</a></footer>
 </main>
-
 <script>
-const $ = (id) => document.getElementById(id);
-const LABELS = { safe: 'Looks safe', suspicious: 'Suspicious', high_risk: 'High risk' };
+const $=id=>document.getElementById(id),show=(id,on)=>$(id).classList.toggle('hidden',!on);
+const V={safe:['Looks safe','\u2713'],suspicious:['Suspicious','!'],high_risk:['High risk','\u2715']};
+const EX={scam:['Urgent! Your refund of $5 is pending. Pay a small processing fee today or your account will be blocked.',5],
+  ok:['Hi, here is the invoice for the logo design we agreed on last week. Total is $4. Thanks!',4]};
+const FINAL=['SUCCESS','FAILED','RETURNED','REFUNDED','BLOCKED','CANCELED','DENIED'];
+let cur=null,timer=null;
+const money=(a,c)=>{try{return new Intl.NumberFormat('en-US',{style:'currency',currency:c}).format(a)}catch{return a+' '+c}};
+function step(n){document.querySelectorAll('#steps li').forEach(li=>{const s=+li.dataset.s;li.className=s<n?'done':s===n?'on':''})}
+async function api(url,body){const r=await fetch(url,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined);
+  let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||'Something went wrong. Please try again.');return d}
+const tile=(n,l)=>{const d=document.createElement('div');d.className='tile';const b=document.createElement('b');b.textContent=n;const s=document.createElement('span');s.textContent=l;d.append(b,s);return d};
+try{$('em').value=localStorage.getItem('ps_email')||''}catch{}
+document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{const e=EX[b.dataset.ex];$('msg').value=e[0];$('amt').value=e[1];$('err').textContent=''});
 
-function input() {
-  return { message: $('message').value, payeeEmail: $('email').value,
-           amount: $('amount').value, currency: $('currency').value };
-}
+$('f').addEventListener('submit',async ev=>{ev.preventDefault();$('err').textContent='';
+  const body={message:$('msg').value.trim(),payeeEmail:$('em').value.trim(),amount:$('amt').value,currency:$('cur').value};
+  if(!body.message||!body.payeeEmail||!body.amount){$('err').textContent='Please fill in the message, payee email and amount.';return}
+  try{localStorage.setItem('ps_email',body.payeeEmail)}catch{}
+  show('s1',false);show('res',false);show('busy',true);step(2);$('busyTxt').textContent='Reading your PayPal history...';
+  const t=setTimeout(()=>{$('busyTxt').textContent='Asking the AI to judge the request...'},2500);
+  try{const d=await api('/api/analyze',body);cur={...d,body};render(d,body)}
+  catch(x){show('busy',false);show('s1',true);step(1);$('err').textContent=x.message}
+  finally{clearTimeout(t)}});
 
-async function post(url, body) {
-  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                 body: JSON.stringify(body) });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Something went wrong');
-  return data;
-}
+function render(d,b){const a=d.analysis,v=V[a.verdict];
+  $('res').className='card '+a.verdict;$('vi').textContent=v[1];$('vt').textContent=v[0];$('adv').textContent=a.advice;
+  $('sc').textContent='';const sm=document.createElement('small');sm.textContent='/100';$('sc').append(a.risk_score,sm);
+  $('mt').setAttribute('aria-label','Risk '+a.risk_score+' out of 100');$('mf').style.width=a.risk_score+'%';
+  $('rs').replaceChildren(...a.reasons.map(r=>{const li=document.createElement('li');li.textContent=r;return li}));
+  const h=d.history;$('fc').replaceChildren();
+  if(h){$('fc').append(tile(h.totalTransactions,'PayPal transactions, last '+h.windowDays+' days'),
+    tile(h.previousWithThisPayee===0?'First time':h.previousWithThisPayee,h.previousWithThisPayee===0?'paying this payee':'past payments to this payee'),
+    tile(h.averageAmount===null?'n/a':money(h.averageAmount,b.currency),'your average transaction'));
+    $('hn').textContent='These numbers come live from the PayPal Transaction Search API.'}
+  else $('hn').textContent='PayPal history was unavailable ('+d.historyError+'), so the AI judged the message alone.';
+  const risky=a.verdict!=='safe';show('ackw',risky);$('ack').checked=false;
+  const p=$('pay');p.textContent=(risky?'Send anyway: ':'Send ')+money(b.amount,b.currency)+' to '+b.payeeEmail;
+  p.className='btn '+(risky?'bad':'ok');p.disabled=risky;show('po',false);$('perr').textContent='';
+  show('busy',false);show('res',true);step(3);$('vt').focus()}
+$('ack').onchange=()=>{$('pay').disabled=!$('ack').checked};
 
-$('check').onclick = async () => {
-  $('error').textContent = '';
-  $('payout').textContent = '';
-  $('result').classList.add('hidden');
-  $('check').disabled = true;
-  $('check').textContent = 'Checking...';
-  try {
-    const { analysis, history, historyError } = await post('/api/analyze', input());
-    $('verdict').className = 'verdict ' + analysis.verdict;
-    $('verdict').textContent = `${LABELS[analysis.verdict] || analysis.verdict} (risk ${analysis.risk_score}/100)`;
-    $('advice').textContent = analysis.advice;
-    $('reasons').innerHTML = '';
-    (analysis.reasons || []).forEach((r) => {
-      const li = document.createElement('li');
-      li.textContent = r;
-      $('reasons').appendChild(li);
-    });
-    $('facts').textContent = history
-      ? `PayPal history (last ${history.windowDays} days): ${history.totalTransactions} transactions, ` +
-        `${history.previousWithThisPayee} involving this payee, average amount ${history.averageAmount ?? 'n/a'}.`
-      : `PayPal history unavailable: ${historyError}`;
-    $('pay').textContent = analysis.verdict === 'safe' ? 'Send payment' : 'Send anyway';
-    $('result').classList.remove('hidden');
-  } catch (e) {
-    $('error').textContent = e.message;
-  }
-  $('check').disabled = false;
-  $('check').textContent = 'Check with AI';
-};
+$('pay').onclick=async()=>{$('perr').textContent='';$('pay').disabled=true;
+  try{const d=await api('/api/pay',{analysisId:cur.analysisId,acknowledgeRisk:$('ack').checked});
+    show('po',true);show('edit',false);$('ack').disabled=true;step(4);$('pb').textContent=d.status;$('pb').className='badge';
+    $('pt').textContent='Payment submitted to PayPal. Batch '+d.batchId+'. This page updates automatically.';poll(d.batchId,0)}
+  catch(x){$('perr').textContent=x.message;$('pay').disabled=$('ack').offsetParent!==null&&!$('ack').checked}};
+async function poll(id,n){clearTimeout(timer);
+  try{const d=await api('/api/payout/'+id),s=d.itemStatus||d.batchStatus||'PENDING';$('pb').textContent=s;
+    $('pb').className='badge'+(s==='SUCCESS'?' done':FINAL.includes(s)?' fail':'');
+    if(s==='SUCCESS'){$('pt').textContent='Payment completed. The money is in the payee\'s PayPal sandbox account. Batch '+id+'.';return}
+    if(FINAL.includes(s)){$('pt').textContent='PayPal reports status '+s+' for batch '+id+'.';return}}catch{}
+  if(n<30)timer=setTimeout(()=>poll(id,n+1),5000);
+  else $('pt').textContent='Still processing. PayPal can take a few minutes in the sandbox. Batch '+id+'.'}
 
-$('pay').onclick = async () => {
-  if ($('verdict').className.includes('high_risk') && !confirm('This looks high risk. Send the payment anyway?')) return;
-  $('pay').disabled = true;
-  $('payout').textContent = 'Sending...';
-  try {
-    const data = await post('/api/pay', input());
-    $('payout').textContent = `Payment submitted. Batch ${data.batchId}, status ${data.status}.`;
-  } catch (e) {
-    $('payout').textContent = e.message;
-  }
-  $('pay').disabled = false;
-};
+function reset(clear){clearTimeout(timer);show('res',false);show('edit',true);$('ack').disabled=false;show('s1',true);step(1);if(clear){$('msg').value='';$('amt').value=''}}
+$('edit').onclick=()=>reset(false);$('again').onclick=()=>reset(true);
+step(1);
 </script>
 </body>
 </html>
